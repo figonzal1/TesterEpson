@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.1.final using JasperReports Library version 6.3.1  -->
+<!-- 2023-03-08T13:47:01 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="ticket" pageWidth="226" pageHeight="305" columnWidth="186" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenResourceMissingType="Key" isIgnorePagination="true" uuid="3dd9bbd4-f93e-4405-bf96-0996221471a9">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<parameter name="sFecha" class="java.lang.String">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+	</parameter>
+	<parameter name="sNumeroAtencion" class="java.lang.String"/>
+	<parameter name="sFila" class="java.lang.String"/>
+	<parameter name="sUrl" class="java.lang.String"/>
+	<parameter name="sMensajeSocio" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<background>
+		<band height="70" splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="90">
+			<staticText>
+				<reportElement x="47" y="17" width="102" height="20" uuid="937db82b-ef64-4256-99a0-4cd90cefe7e0">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Verdana" size="14" isBold="false"/>
+				</textElement>
+				<text><![CDATA[¡Bienvenido!]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="29" y="40" width="138" height="20" uuid="32e808b3-bde1-4d39-8459-8a77543d4c40"/>
+				<textElement textAlignment="Center">
+					<font fontName="Verdana" size="10" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Tu número de atención es:]]></text>
+			</staticText>
+			<image>
+				<reportElement x="18" y="-14" width="161" height="30" uuid="0712e517-60b5-4ff9-b7ae-14640f63dec7"/>
+				<imageExpression><![CDATA["C:/reporteTicket/coopeuch.png"]]></imageExpression>
+			</image>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="175">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField>
+				<reportElement x="8" y="-28" width="169" height="52" uuid="8b05e500-63f5-42b4-a4d2-92b29a555bdf"/>
+				<textElement textAlignment="Center">
+					<font fontName="Verdana" size="35" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{sNumeroAtencion}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="20" width="180" height="18" uuid="e563313c-1c4e-48e0-9aaf-4c1efe907c45"/>
+				<textElement textAlignment="Center">
+					<font fontName="Verdana" size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{sFila}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="4" y="40" width="172" height="20" uuid="cfcbfb39-a3d5-4b14-bc45-ddd03ae3e62b">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font fontName="Verdana" size="8"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<text><![CDATA[Conoce el estado de tu ticket escaneando este código]]></text>
+			</staticText>
+			<componentElement>
+				<reportElement mode="Transparent" x="30" y="70" width="121" height="102" uuid="c3099251-c159-4bfd-b51c-5b2e0203535c">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<jr:QRCode xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" evaluationTime="Report">
+					<jr:codeExpression><![CDATA[$P{sUrl}]]></jr:codeExpression>
+				</jr:QRCode>
+			</componentElement>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="20">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement positionType="Float" x="17" y="0" width="147" height="20" uuid="a98cf5c4-ec38-4256-a6be-efbbab5089c9">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center" markup="styled"/>
+				<textFieldExpression><![CDATA[$P{sMensajeSocio}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<summary>
+		<band height="151">
+			<textField>
+				<reportElement x="0" y="30" width="186" height="13" uuid="9139d1a1-f141-4cfe-aa88-6bb568f81b00"/>
+				<textElement textAlignment="Center">
+					<font fontName="Verdana" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{sFecha}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement stretchType="ElementGroupBottom" x="0" y="50" width="186" height="20" uuid="018d4798-2903-4cde-8b8e-0322ac2a8e5e"/>
+				<textElement textAlignment="Center">
+					<font fontName="Verdana" size="7" isBold="false" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[VISÍTANOS EN WWW.COOPEUCH.CL]]></text>
+			</staticText>
+		</band>
+	</summary>
+</jasperReport>
