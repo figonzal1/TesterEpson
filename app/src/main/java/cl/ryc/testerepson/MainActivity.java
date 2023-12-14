@@ -1,43 +1,40 @@
 package cl.ryc.testerepson;
 
+import android.os.Bundle;
+import android.util.Log;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Context;
-import android.content.res.AssetManager;
-import android.os.Bundle;
-import android.print.PrintAttributes;
-import android.print.PrintDocumentAdapter;
-import android.print.PrintJob;
-import android.print.PrintManager;
-import android.util.Log;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.widget.Button;
+import com.epson.epos2.Epos2Exception;
+import com.epson.epos2.discovery.Discovery;
+import com.epson.epos2.discovery.DiscoveryListener;
+import com.epson.epos2.discovery.FilterOption;
+import com.epson.epos2.printer.Printer;
+import com.epson.epos2.printer.StatusChangeListener;
 
-import net.sf.jasperreports.engine.JREmptyDataSource;
-import net.sf.jasperreports.engine.JRException;
-import net.sf.jasperreports.engine.JasperFillManager;
-import net.sf.jasperreports.engine.JasperPrint;
-import net.sf.jasperreports.engine.export.JRPdfExporter;
-import net.sf.jasperreports.export.SimpleExporterInput;
-import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
-import net.sf.jasperreports.export.SimplePdfExporterConfiguration;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
-    private WebView mWebView;
+    Button btn;
+    TextView txtView;
+
+    private String targetDevice;
+
+    private Printer mPrinter = null;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Button btn = findViewById(R.id.btn_print);
+        btn = findViewById(R.id.btn_print);
+        txtView = findViewById(R.id.textView);
 
         String fecha = "2023-08-12";
         String numeroAtencion = "p22";
@@ -49,52 +46,149 @@ public class MainActivity extends AppCompatActivity {
         parameters.put("sFila", fila);
 
         btn.setOnClickListener(v -> {
-            doWebViewPrint();
+
+            try {
+                FilterOption filterOption = new FilterOption();
+                filterOption.setPortType(Discovery.PORTTYPE_USB);
+                filterOption.setDeviceModel(Discovery.MODEL_ALL);
+                filterOption.setDeviceType(Discovery.TYPE_PRINTER);
+
+                //Start discover
+                Discovery.start(this, filterOption, mDiscoveryListener);
+
+            } catch (Exception e) {
+                Log.e("DISCOVERY", "discovery error");
+            }
         });
     }
 
-    private void doWebViewPrint() {
-        // Create a WebView object specifically for printing
-        WebView webView = new WebView(this);
-        webView.setWebViewClient(new WebViewClient() {
+    private void initializeObject() {
+        try {
+            mPrinter = new Printer(Printer.TM_T88, Printer.MODEL_ANK, getApplicationContext());
+        } catch (Exception e) {
+            txtView.setText("Error el instanciar impresora");
+            e.printStackTrace();
+        }
 
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                return false;
-            }
+        mPrinter.setStatusChangeEventListener((printer, eventType) -> {
 
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                Log.i("TAG", "page finished loading " + url);
-                createWebPrintJob(view);
-                mWebView = null;
-            }
+            runOnUiThread(() -> {
+                txtView.setText(makeStatusMassage(eventType));
+            });
         });
 
-        // Generate an HTML document on the fly:
-        String htmlDocument = "<html><body><h1>Test Content</h1><p>Testing, " +
-                "testing, testing...</p></body></html>";
-        webView.loadDataWithBaseURL(null, htmlDocument, "text/HTML", "UTF-8", null);
 
-        // Keep a reference to WebView object until you pass the PrintDocumentAdapter
-        // to the PrintManager
-        mWebView = webView;
+        try {
+            mPrinter.connect(targetDevice, Printer.PARAM_DEFAULT);
+
+            Toast.makeText(getApplicationContext(), "Impresora conectada", Toast.LENGTH_SHORT).show();
+
+            mPrinter.startMonitor();
+        } catch (Epos2Exception e) {
+            txtView.setText("Error al conectar impresora");
+        }
+
     }
 
-    private void createWebPrintJob(WebView webView) {
+    private String makeStatusMassage(int type) {
+        String msg = "";
 
-        // Get a PrintManager instance
-        PrintManager printManager = (PrintManager) getSystemService(Context.PRINT_SERVICE);
+        switch (type) {
+            case Printer.EVENT_ONLINE:
+                msg = "ONLINE";
+                break;
+            case Printer.EVENT_OFFLINE:
+                msg = "OFFLINE";
+                break;
+            case Printer.EVENT_POWER_OFF:
+                msg = "POWER_OFF";
+                break;
+            case Printer.EVENT_COVER_CLOSE:
+                msg = "COVER_CLOSE";
+                break;
+            case Printer.EVENT_COVER_OPEN:
+                msg = "COVER_OPEN";
+                break;
+            case Printer.EVENT_PAPER_OK:
+                msg = "PAPER_OK";
+                break;
+            case Printer.EVENT_PAPER_NEAR_END:
+                msg = "PAPER_NEAR_END";
+                break;
+            case Printer.EVENT_PAPER_EMPTY:
+                msg = "PAPER_EMPTY";
+                break;
+            case Printer.EVENT_DRAWER_HIGH:
+                //This status depends on the drawer setting.
+                msg = "DRAWER_HIGH(Drawer close)";
+                break;
+            case Printer.EVENT_DRAWER_LOW:
+                //This status depends on the drawer setting.
+                msg = "DRAWER_LOW(Drawer open)";
+                break;
+            case Printer.EVENT_BATTERY_ENOUGH:
+                msg = "BATTERY_ENOUGH";
+                break;
+            case Printer.EVENT_BATTERY_EMPTY:
+                msg = "BATTERY_EMPTY";
+                break;
+            case Printer.EVENT_REMOVAL_WAIT_PAPER:
+                msg = "WAITING_FOR_PAPER_REMOVAL";
+                break;
+            case Printer.EVENT_REMOVAL_WAIT_NONE:
+                msg = "NOT_WAITING_FOR_PAPER_REMOVAL";
+                break;
+            case Printer.EVENT_REMOVAL_DETECT_PAPER:
+                msg = "REMOVAL_DETECT_PAPER";
+                break;
+            case Printer.EVENT_REMOVAL_DETECT_PAPER_NONE:
+                msg = "REMOVAL_DETECT_PAPER_NONE";
+                break;
+            case Printer.EVENT_REMOVAL_DETECT_UNKNOWN:
+                msg = "REMOVAL_DETECT_UNKNOWN";
+                break;
+            case Printer.EVENT_AUTO_RECOVER_ERROR:
+                msg = "AUTO_RECOVER_ERROR";
+                break;
+            case Printer.EVENT_AUTO_RECOVER_OK:
+                msg = "AUTO_RECOVER_OK";
+                break;
+            case Printer.EVENT_UNRECOVERABLE_ERROR:
+                msg = "UNRECOVERABLE_ERROR";
+                break;
+            default:
+                break;
+        }
+        return msg;
+    }
 
-        String jobName = getString(R.string.app_name) + " Document";
+    private final DiscoveryListener mDiscoveryListener = deviceInfo -> runOnUiThread(new Runnable() {
+        @Override
+        public synchronized void run() {
+            //Display the detected device in the application software
+            txtView.setText("Device info: " + deviceInfo.getDeviceName() + ", " + deviceInfo.getTarget() + ", " + deviceInfo.getDeviceType());
 
-        // Get a print adapter instance
-        PrintDocumentAdapter printAdapter = webView.createPrintDocumentAdapter(jobName);
+            targetDevice = deviceInfo.getTarget();
 
-        // Create a print job with name and adapter instance
-        PrintJob printJob = printManager.print(jobName, printAdapter,
-                new PrintAttributes.Builder().build());
+            try {
+                Discovery.stop();
 
-        // Save the job object for later status checking
-        //printJobs.add(printJob);
+                initializeObject();
+            } catch (Epos2Exception e) {
+                Log.e("STOP_DISCOVERY", "error al detener el discovery");
+            }
+        }
+    });
+
+    public void onDestroy() {
+        try {
+            mPrinter.disconnect();
+
+            mPrinter.setStatusChangeEventListener(null);
+            mPrinter = null;
+        } catch (Epos2Exception e) {
+            throw new RuntimeException(e);
+        }
+        super.onDestroy();
     }
 }
