@@ -1,40 +1,47 @@
 package cl.ryc.testerepson;
 
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.epson.epos2.Epos2Exception;
-import com.epson.epos2.discovery.Discovery;
-import com.epson.epos2.discovery.DiscoveryListener;
-import com.epson.epos2.discovery.FilterOption;
 import com.epson.epos2.printer.Printer;
-import com.epson.epos2.printer.StatusChangeListener;
 
 import java.util.HashMap;
-import java.util.Objects;
+
+import cl.ryc.testerepson.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
 
-    Button btn;
-    TextView txtView;
-
-    private String targetDevice;
+    private ActivityMainBinding binding = null;
+    Button btnConnect, btnDisconnect;
+    TextView tvPrintName;
+    TextView tvPrintStatus;
 
     private Printer mPrinter = null;
+    private UsbDevice mUsbDevice = null;
+    private String mTargetDevice;
 
+    private boolean detected = false;
+    private boolean connected = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        View view = binding.getRoot();
+        setContentView(view);
 
-        btn = findViewById(R.id.btn_print);
-        txtView = findViewById(R.id.textView);
+        btnConnect = binding.btnConnect;
+        btnDisconnect = binding.btnDisconnect;
+        tvPrintName = binding.tvPrintName;
+        tvPrintStatus = binding.tvPrintStatus;
 
         String fecha = "2023-08-12";
         String numeroAtencion = "p22";
@@ -45,150 +52,127 @@ public class MainActivity extends AppCompatActivity {
         parameters.put("sNumeroAtencion", numeroAtencion);
         parameters.put("sFila", fila);
 
-        btn.setOnClickListener(v -> {
 
-            try {
-                FilterOption filterOption = new FilterOption();
-                filterOption.setPortType(Discovery.PORTTYPE_USB);
-                filterOption.setDeviceModel(Discovery.MODEL_ALL);
-                filterOption.setDeviceType(Discovery.TYPE_PRINTER);
+        mUsbDevice = getIntent().getParcelableExtra(UsbManager.EXTRA_DEVICE);
+        if (mUsbDevice != null) {
 
-                //Start discover
-                Discovery.start(this, filterOption, mDiscoveryListener);
+            Log.d("DEVICE_USB", mUsbDevice.toString());
 
-            } catch (Exception e) {
-                Log.e("DISCOVERY", "discovery error");
+            tvPrintName.setText("Impresora detectada: " + mUsbDevice.getProductName());
+
+            if (mUsbDevice.getProductName() != null && mUsbDevice.getProductName().contains("TM-T88V")) {
+                Log.d("PRINTER", "TM-T88V detectada");
+
+                detected = true;
+                mTargetDevice = "USB:" + mUsbDevice.getDeviceName();
+
+                if (detected) {
+                    btnConnect.setEnabled(true);
+                }
+            }
+        }
+
+
+        btnConnect.setOnClickListener(v ->
+        {
+            if (detected) {
+                //Conectar impresora
+                try {
+                    mPrinter = new Printer(Printer.TM_T88, Printer.MODEL_ANK, getApplicationContext());
+
+                    mPrinter.setStatusChangeEventListener((printer, eventType) -> {
+
+                        Log.d("PRINTER_EVENT", printer.toString() + ", Evento: " + eventType);
+
+
+                        runOnUiThread(() -> {
+                            tvPrintStatus.setText(tvPrintStatus.getText().toString().concat("\n" + makeStatusMassage(eventType)));
+                            binding.scrollView.fullScroll(View.FOCUS_DOWN);
+                        });
+                    });
+
+                    mPrinter.connect(mTargetDevice, Printer.PARAM_DEFAULT);
+                    connected = true;
+
+                    btnDisconnect.setVisibility(View.VISIBLE);
+                    btnDisconnect.setEnabled(true);
+                    btnConnect.setEnabled(false);
+
+                    mPrinter.startMonitor();
+
+
+                } catch (Epos2Exception e) {
+                    Log.e("PRINTER", "Error al conectar la impresora: " + e.getMessage());
+                }
             }
         });
-    }
 
-    private void initializeObject() {
-        try {
-            mPrinter = new Printer(Printer.TM_T88, Printer.MODEL_ANK, getApplicationContext());
-        } catch (Exception e) {
-            txtView.setText("Error el instanciar impresora");
-            e.printStackTrace();
-        }
+        btnDisconnect.setOnClickListener(v -> {
+            if (detected && connected) {
+                try {
+                    mPrinter.disconnect();
 
-        mPrinter.setStatusChangeEventListener((printer, eventType) -> {
+                    mPrinter.setStatusChangeEventListener(null);
+                    mPrinter = null;
 
-            runOnUiThread(() -> {
-                txtView.setText(makeStatusMassage(eventType));
-            });
+                    btnConnect.setEnabled(true);
+                    btnDisconnect.setVisibility(View.GONE);
+                    btnDisconnect.setEnabled(false);
+
+                    tvPrintStatus.setText("");
+                } catch (Epos2Exception e) {
+                    Log.e("PRINTER", "Error al desconectar la impresora: " + e.getMessage());
+                }
+            }
         });
-
-
-        try {
-            mPrinter.connect(targetDevice, Printer.PARAM_DEFAULT);
-
-            Toast.makeText(getApplicationContext(), "Impresora conectada", Toast.LENGTH_SHORT).show();
-
-            mPrinter.startMonitor();
-        } catch (Epos2Exception e) {
-            txtView.setText("Error al conectar impresora");
-        }
-
     }
 
     private String makeStatusMassage(int type) {
         String msg = "";
 
         switch (type) {
-            case Printer.EVENT_ONLINE:
-                msg = "ONLINE";
-                break;
-            case Printer.EVENT_OFFLINE:
-                msg = "OFFLINE";
-                break;
-            case Printer.EVENT_POWER_OFF:
-                msg = "POWER_OFF";
-                break;
-            case Printer.EVENT_COVER_CLOSE:
-                msg = "COVER_CLOSE";
-                break;
-            case Printer.EVENT_COVER_OPEN:
-                msg = "COVER_OPEN";
-                break;
-            case Printer.EVENT_PAPER_OK:
-                msg = "PAPER_OK";
-                break;
-            case Printer.EVENT_PAPER_NEAR_END:
-                msg = "PAPER_NEAR_END";
-                break;
-            case Printer.EVENT_PAPER_EMPTY:
-                msg = "PAPER_EMPTY";
-                break;
-            case Printer.EVENT_DRAWER_HIGH:
+            case Printer.EVENT_ONLINE -> msg = "ONLINE";
+            case Printer.EVENT_OFFLINE -> msg = "OFFLINE";
+            case Printer.EVENT_POWER_OFF -> msg = "POWER_OFF";
+            case Printer.EVENT_COVER_CLOSE -> msg = "COVER_CLOSE";
+            case Printer.EVENT_COVER_OPEN -> msg = "COVER_OPEN";
+            case Printer.EVENT_PAPER_OK -> msg = "PAPER_OK";
+            case Printer.EVENT_PAPER_NEAR_END -> msg = "PAPER_NEAR_END";
+            case Printer.EVENT_PAPER_EMPTY -> msg = "PAPER_EMPTY";
+            case Printer.EVENT_DRAWER_HIGH ->
                 //This status depends on the drawer setting.
-                msg = "DRAWER_HIGH(Drawer close)";
-                break;
-            case Printer.EVENT_DRAWER_LOW:
+                    msg = "DRAWER_HIGH(Drawer close)";
+            case Printer.EVENT_DRAWER_LOW ->
                 //This status depends on the drawer setting.
-                msg = "DRAWER_LOW(Drawer open)";
-                break;
-            case Printer.EVENT_BATTERY_ENOUGH:
-                msg = "BATTERY_ENOUGH";
-                break;
-            case Printer.EVENT_BATTERY_EMPTY:
-                msg = "BATTERY_EMPTY";
-                break;
-            case Printer.EVENT_REMOVAL_WAIT_PAPER:
-                msg = "WAITING_FOR_PAPER_REMOVAL";
-                break;
-            case Printer.EVENT_REMOVAL_WAIT_NONE:
-                msg = "NOT_WAITING_FOR_PAPER_REMOVAL";
-                break;
-            case Printer.EVENT_REMOVAL_DETECT_PAPER:
-                msg = "REMOVAL_DETECT_PAPER";
-                break;
-            case Printer.EVENT_REMOVAL_DETECT_PAPER_NONE:
-                msg = "REMOVAL_DETECT_PAPER_NONE";
-                break;
-            case Printer.EVENT_REMOVAL_DETECT_UNKNOWN:
-                msg = "REMOVAL_DETECT_UNKNOWN";
-                break;
-            case Printer.EVENT_AUTO_RECOVER_ERROR:
-                msg = "AUTO_RECOVER_ERROR";
-                break;
-            case Printer.EVENT_AUTO_RECOVER_OK:
-                msg = "AUTO_RECOVER_OK";
-                break;
-            case Printer.EVENT_UNRECOVERABLE_ERROR:
-                msg = "UNRECOVERABLE_ERROR";
-                break;
-            default:
-                break;
+                    msg = "DRAWER_LOW(Drawer open)";
+            case Printer.EVENT_BATTERY_ENOUGH -> msg = "BATTERY_ENOUGH";
+            case Printer.EVENT_BATTERY_EMPTY -> msg = "BATTERY_EMPTY";
+            case Printer.EVENT_REMOVAL_WAIT_PAPER -> msg = "WAITING_FOR_PAPER_REMOVAL";
+            case Printer.EVENT_REMOVAL_WAIT_NONE -> msg = "NOT_WAITING_FOR_PAPER_REMOVAL";
+            case Printer.EVENT_REMOVAL_DETECT_PAPER -> msg = "REMOVAL_DETECT_PAPER";
+            case Printer.EVENT_REMOVAL_DETECT_PAPER_NONE -> msg = "REMOVAL_DETECT_PAPER_NONE";
+            case Printer.EVENT_REMOVAL_DETECT_UNKNOWN -> msg = "REMOVAL_DETECT_UNKNOWN";
+            case Printer.EVENT_AUTO_RECOVER_ERROR -> msg = "AUTO_RECOVER_ERROR";
+            case Printer.EVENT_AUTO_RECOVER_OK -> msg = "AUTO_RECOVER_OK";
+            case Printer.EVENT_UNRECOVERABLE_ERROR -> msg = "UNRECOVERABLE_ERROR";
+            default -> {
+            }
         }
         return msg;
     }
 
-    private final DiscoveryListener mDiscoveryListener = deviceInfo -> runOnUiThread(new Runnable() {
-        @Override
-        public synchronized void run() {
-            //Display the detected device in the application software
-            txtView.setText("Device info: " + deviceInfo.getDeviceName() + ", " + deviceInfo.getTarget() + ", " + deviceInfo.getDeviceType());
-
-            targetDevice = deviceInfo.getTarget();
-
+    public void onDestroy() {
+        if (mPrinter != null) {
             try {
-                Discovery.stop();
+                mPrinter.disconnect();
 
-                initializeObject();
+                mPrinter.setStatusChangeEventListener(null);
+                mPrinter = null;
             } catch (Epos2Exception e) {
-                Log.e("STOP_DISCOVERY", "error al detener el discovery");
+                throw new RuntimeException(e);
             }
         }
-    });
 
-    public void onDestroy() {
-        try {
-            mPrinter.disconnect();
-
-            mPrinter.setStatusChangeEventListener(null);
-            mPrinter = null;
-        } catch (Epos2Exception e) {
-            throw new RuntimeException(e);
-        }
         super.onDestroy();
     }
 }
