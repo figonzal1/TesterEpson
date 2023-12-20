@@ -153,81 +153,87 @@ public class MainActivity extends AppCompatActivity implements ReceiveListener {
 
             Bitmap resizedBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.coopeuch_android);
 
+
             if (mPrinter != null) {
-                try {
-                    mPrinter.addTextAlign(Printer.ALIGN_CENTER);
-                    mPrinter.addTextFont(Printer.FONT_A);
-                    mPrinter.addTextSmooth(Printer.TRUE);
 
-                    mPrinter.addImage(resizedBitmap, 0, 0,
-                            resizedBitmap.getWidth(),
-                            resizedBitmap.getHeight(),
-                            Printer.COLOR_1,
-                            Printer.MODE_MONO,
-                            Printer.HALFTONE_DITHER,
-                            Printer.PARAM_DEFAULT,
-                            Printer.COMPRESS_NONE);
+                if (mPrinter.getStatus().getOnline() == 1) {
+                    try {
+                        mPrinter.addTextAlign(Printer.ALIGN_CENTER);
+                        mPrinter.addTextFont(Printer.FONT_A);
+                        mPrinter.addTextSmooth(Printer.TRUE);
 
-                    //SPACING
-                    mPrinter.addFeedLine(1);
+                        mPrinter.addImage(resizedBitmap, 0, 0,
+                                resizedBitmap.getWidth(),
+                                resizedBitmap.getHeight(),
+                                Printer.COLOR_1,
+                                Printer.MODE_MONO,
+                                Printer.HALFTONE_DITHER,
+                                Printer.PARAM_DEFAULT,
+                                Printer.COMPRESS_NONE);
 
-                    //Bienvenido
-                    mPrinter.addTextStyle(Print.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.TRUE, Printer.PARAM_DEFAULT);
+                        //SPACING
+                        mPrinter.addFeedLine(1);
 
-                    mPrinter.addTextSize(2, 2);
-                    mPrinter.addText("¡Bienvenido!");
+                        //Bienvenido
+                        mPrinter.addTextStyle(Print.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.TRUE, Printer.PARAM_DEFAULT);
 
-                    //SPACING
-                    mPrinter.addFeedLine(3);
+                        mPrinter.addTextSize(2, 2);
+                        mPrinter.addText("¡Bienvenido!");
 
-                    //Tu numero de atencion
-                    mPrinter.addTextSize(1, 1);
-                    mPrinter.addText("Tu número de atención");
+                        //SPACING
+                        mPrinter.addFeedLine(3);
 
-                    //SPACING
-                    mPrinter.addFeedLine(3);
+                        //Tu numero de atencion
+                        mPrinter.addTextSize(1, 1);
+                        mPrinter.addText("Tu número de atención");
 
-                    //CODIGO NUMERO
-                    mPrinter.addTextSize(5, 5);
-                    mPrinter.addText("C17");
+                        //SPACING
+                        mPrinter.addFeedLine(3);
 
-                    //SPACING
-                    mPrinter.addFeedLine(6);
+                        //CODIGO NUMERO
+                        mPrinter.addTextSize(5, 5);
+                        mPrinter.addText("C17");
 
-                    mPrinter.addTextSize(1, 1);
-                    mPrinter.addText("Caja");
-                    mPrinter.addFeedLine(2);
-                    mPrinter.addText("Conoce el estado de tu ticket \n escaneando este código");
+                        //SPACING
+                        mPrinter.addFeedLine(6);
 
-                    //SPACING
-                    mPrinter.addFeedLine(2);
+                        mPrinter.addTextSize(1, 1);
+                        mPrinter.addText("Caja");
+                        mPrinter.addFeedLine(2);
+                        mPrinter.addText("Conoce el estado de tu ticket \n escaneando este código");
 
-                    mPrinter.addSymbol("http://mipagina:8080", Printer.SYMBOL_QRCODE_MODEL_2, Printer.LEVEL_H, 8, 8, 0);
+                        //SPACING
+                        mPrinter.addFeedLine(2);
 
-                    mPrinter.addFeedLine(1);
+                        mPrinter.addSymbol("http://mipagina:8080", Printer.SYMBOL_QRCODE_MODEL_2, Printer.LEVEL_H, 8, 8, 0);
 
-                    //BIENVENIDO
-                    mPrinter.addTextStyle(Print.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.FALSE, Printer.PARAM_DEFAULT);
-                    mPrinter.addText("BIENVENIDO A COOPEUCH");
-                    mPrinter.addFeedLine(4);
+                        mPrinter.addFeedLine(1);
 
-                    //FOOTER
-                    mPrinter.addTextStyle(Print.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.TRUE, Printer.PARAM_DEFAULT);
-                    mPrinter.addText("18-12-2023 12:24:58");
-                    mPrinter.addFeedLine(2);
-                    mPrinter.addTextStyle(Print.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.FALSE, Printer.PARAM_DEFAULT);
-                    mPrinter.addText("VISÍTANOS EN WWW.COOPEUCH.CL");
+                        //BIENVENIDO
+                        mPrinter.addTextStyle(Print.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.FALSE, Printer.PARAM_DEFAULT);
+                        mPrinter.addText("BIENVENIDO A COOPEUCH");
+                        mPrinter.addFeedLine(4);
 
-                    //FINAL CUT
-                    mPrinter.addFeedLine(1);
-                    mPrinter.addCut(Printer.CUT_FEED);
+                        //FOOTER
+                        mPrinter.addTextStyle(Print.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.TRUE, Printer.PARAM_DEFAULT);
+                        mPrinter.addText("18-12-2023 12:24:58");
+                        mPrinter.addFeedLine(2);
+                        mPrinter.addTextStyle(Print.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.FALSE, Printer.PARAM_DEFAULT);
+                        mPrinter.addText("VISÍTANOS EN WWW.COOPEUCH.CL");
 
-                    mPrinter.sendData(Printer.PARAM_DEFAULT);
+                        //FINAL CUT
+                        mPrinter.addFeedLine(1);
+                        mPrinter.addCut(Printer.CUT_FEED);
 
-                    mPrinter.clearCommandBuffer();
-                } catch (Epos2Exception e) {
-                    e.printStackTrace();
-                    Log.e("PRINTER", "Error al imprimir el texto: " + e.getMessage() + ", " + e.getErrorStatus());
+                        mPrinter.sendData(Printer.PARAM_DEFAULT);
+
+                        mPrinter.clearCommandBuffer();
+                    } catch (Epos2Exception e) {
+                        e.printStackTrace();
+                        Log.e("PRINTER", "Error al imprimir el texto: " + e.getMessage() + ", " + e.getErrorStatus());
+                    }
+                } else {
+                    Toast.makeText(getApplicationContext(), "Impresora no disponible", Toast.LENGTH_SHORT).show();
                 }
             }
         });
