@@ -159,15 +159,7 @@ public class MainActivity extends AppCompatActivity implements ReceiveListener {
                     mPrinter.addTextFont(Printer.FONT_A);
                     mPrinter.addTextSmooth(Printer.TRUE);
 
-                    mPrinter.addSymbol("contenido del QR", Printer.SYMBOL_QRCODE_MODEL_2, Printer.LEVEL_H, 8, 8, 0);
-                    mPrinter.addFeedLine(1);
-                    mPrinter.addSymbol("contenido del QR", Printer.SYMBOL_QRCODE_MODEL_2, Printer.LEVEL_H, 10, 10, 0);
-                    mPrinter.addFeedLine(1);
-                    mPrinter.addSymbol("contenido del QR", Printer.SYMBOL_QRCODE_MODEL_2, Printer.LEVEL_H, 10, 10, 0);
-                    mPrinter.addFeedLine(1);
-
-
-                    /*mPrinter.addImage(resizedBitmap, 0, 0,
+                    mPrinter.addImage(resizedBitmap, 0, 0,
                             resizedBitmap.getWidth(),
                             resizedBitmap.getHeight(),
                             Printer.COLOR_1,
@@ -196,17 +188,23 @@ public class MainActivity extends AppCompatActivity implements ReceiveListener {
                     mPrinter.addFeedLine(3);
 
                     //CODIGO NUMERO
+                    mPrinter.addTextSize(5, 5);
                     mPrinter.addText("C17");
 
                     //SPACING
-                    mPrinter.addFeedLine(3);
+                    mPrinter.addFeedLine(6);
 
+                    mPrinter.addTextSize(1, 1);
                     mPrinter.addText("Caja");
                     mPrinter.addFeedLine(2);
                     mPrinter.addText("Conoce el estado de tu ticket \n escaneando este código");
 
                     //SPACING
-                    mPrinter.addFeedLine(3);
+                    mPrinter.addFeedLine(2);
+
+                    mPrinter.addSymbol("http://mipagina:8080", Printer.SYMBOL_QRCODE_MODEL_2, Printer.LEVEL_H, 8, 8, 0);
+
+                    mPrinter.addFeedLine(1);
 
                     //BIENVENIDO
                     mPrinter.addTextStyle(Print.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.FALSE, Printer.PARAM_DEFAULT);
@@ -216,13 +214,13 @@ public class MainActivity extends AppCompatActivity implements ReceiveListener {
                     //FOOTER
                     mPrinter.addTextStyle(Print.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.TRUE, Printer.PARAM_DEFAULT);
                     mPrinter.addText("18-12-2023 12:24:58");
-                    mPrinter.addFeedLine(1);
+                    mPrinter.addFeedLine(2);
                     mPrinter.addTextStyle(Print.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.FALSE, Printer.PARAM_DEFAULT);
-                    mPrinter.addText("VISÍTANOS EN WWW.COOPEUCH.CL");*/
+                    mPrinter.addText("VISÍTANOS EN WWW.COOPEUCH.CL");
 
                     //FINAL CUT
-                    //mPrinter.addFeedLine(1);
-                    //mPrinter.addCut(Printer.CUT_FEED);
+                    mPrinter.addFeedLine(1);
+                    mPrinter.addCut(Printer.CUT_FEED);
 
                     mPrinter.sendData(Printer.PARAM_DEFAULT);
 
